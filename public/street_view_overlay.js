@@ -8,7 +8,7 @@
 (function () {
     'use strict';
 
-    // ── Configuration ─────────────────────────────────────────────────────────
+    // Configuration
     const MAX_DIST_M = 150;     // metres — max distance to render a vertex
     const DENSIFY_STEP_M = 5;   // metres — max spacing between densified points
     const CAM_HEIGHT = 2.5;     // metres — standard SV camera height above ground
@@ -17,7 +17,7 @@
     const D2R = Math.PI / 180;
     const R2D = 180 / Math.PI;
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    // State
     let svCanvas = null;
     let svCtx = null;
     let panorama = null;
@@ -36,7 +36,7 @@
     let isStreetViewActive = false;
     let pegmanMarker = null;
 
-    // ── Coordinate helpers ────────────────────────────────────────────────────
+    // Coordinate helpers
     function haversine(a, b) {
         let dLat = (b[0] - a[0]) * D2R, dLng = (b[1] - a[1]) * D2R;
         let s = Math.sin(dLat / 2), t = Math.sin(dLng / 2);
@@ -56,7 +56,7 @@
         return lat.toFixed(5) + ',' + lng.toFixed(5);
     }
 
-    // ── Densification ─────────────────────────────────────────────────────────
+    // Densification
     function densifyToLL(coords) {
         let result = [];
         for (let i = 0; i < coords.length; i++) {
@@ -78,7 +78,7 @@
         return result;
     }
 
-    // ── Extract Mapbox Features ────────────────────────────────────────────────
+    // Extract Mapbox Features
     function extractMapboxFeatures() {
         if (!window.mapLayers) return [];
         
@@ -96,7 +96,7 @@
         return features;
     }
 
-    // ── Elevation fetching ────────────────────────────────────────────────────
+    // Elevation fetching
     function collectUncachedVertices(camLL) {
         let pending = [];
         const features = extractMapboxFeatures();
@@ -186,7 +186,7 @@
         }
     }
 
-    // ── Projection ────────────────────────────────────────────────────────────
+    // Projection
     function getFocal(zoom, W) {
         let hFov = 180 / Math.pow(2, zoom);
         hFov = Math.min(170, Math.max(1, hFov));
@@ -241,7 +241,7 @@
         return { x: W / 2 + f * xNorm, y: H / 2 - f * yNorm };
     }
 
-    // ── Style Extraction ──────────────────────────────────────────────────────
+    // Style Extraction
     function extractMapboxStyle(feature) {
         let color = feature._svColor || 'rgba(255,255,255,0.8)';
         let width = 2;
@@ -255,7 +255,7 @@
         return { color, width };
     }
 
-    // ── Drawing ───────────────────────────────────────────────────────────────
+    // Drawing
     function drawLL(llPoints, camLL, heading, pitch, f, W, H, close) {
         let hasPoint = false;
         svCtx.beginPath();
@@ -400,7 +400,7 @@
         }
     }
 
-    // ── Canvas lifecycle ──────────────────────────────────────────────────────
+    // Canvas lifecycle
     function createCanvas() {
         let panoDiv = document.getElementById('street-view-container');
         if (!panoDiv) return false;

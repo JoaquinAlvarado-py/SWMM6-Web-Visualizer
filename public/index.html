@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSWMM 6.0.0 3D</title>
+    <!-- Google Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Mapbox GL JS CSS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet" />
+    <!-- Local Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app-grid">
+        <!-- TOP TOOLBAR (slim — file operations only) -->
+        <header id="toolbar">
+            <div class="tb-brand">OpenSWMM&nbsp;3D</div>
+
+            <div class="tb-group">
+                <button id="btn-undo" class="tb-icon-btn" title="Undo (Ctrl+Z)" disabled>
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+                </button>
+                <button id="btn-redo" class="tb-icon-btn" title="Redo (Ctrl+Shift+Z)" disabled>
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+                </button>
+            </div>
+
+            <div class="tb-group">
+                <button id="btn-save" class="tb-btn">Save</button>
+                <div class="tb-dropdown">
+                    <button id="btn-load" class="tb-btn">Load / Import <span class="caret">▾</span></button>
+                    <div class="tb-dropdown-menu" id="load-menu">
+                        <button id="btn-load-file" class="tb-menu-item">Open Model (.json)…</button>
+                        <button id="btn-load-local" class="tb-menu-item">Load from Browser Storage</button>
+                        <button id="btn-load-inp" class="tb-menu-item">Import SWMM .inp Model…</button>
+                        <button id="btn-import-shp" class="tb-menu-item">Import GIS Shapefile (.zip)…</button>
+                        <button id="btn-import-dxf" class="tb-menu-item">Import CAD Drawing (.dxf)…</button>
+                        <button id="btn-load-sample" class="tb-menu-item">Load Sample Network</button>
+                    </div>
+                </div>
+                <button id="btn-export-inp" class="tb-btn">Export INP</button>
+            </div>
+
+            <div class="tb-group tb-group-right">
+                <button id="btn-run" class="tb-btn tb-btn-run" title="Run SWMM simulation">
+                    <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                    Run
+                </button>
+                <button id="btn-clear" class="tb-btn">Clear</button>
+            </div>
+        </header>
+
+        <!-- VERTICAL TOOL PALETTE (left side of map) -->
+        <div id="tool-palette">
+            <div id="tool-buttons">
+                <button class="tool-btn active" data-tool="select" title="Select / move (Esc)">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 2l12 11.2-5.8.5 3.3 7.3-2.2 1-3.2-7.4L7 18.5z"/></svg>
+                </button>
+                <div class="tool-divider"></div>
+                <span class="tool-group-label">Nodes</span>
+                <button class="tool-btn" data-tool="junction" title="Add junction">
+                    <img src="icons/obj_node_junction.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="outfall" title="Add outfall">
+                    <img src="icons/obj_node_outfall.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="storage" title="Add storage unit">
+                    <img src="icons/obj_node_storage.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="divider" title="Add flow divider">
+                    <img src="icons/obj_node_divider.png" width="18" height="18" alt="">
+                </button>
+                <div class="tool-divider"></div>
+                <span class="tool-group-label">Links</span>
+                <button class="tool-btn" data-tool="conduit" title="Draw conduit (click nodes)">
+                    <img src="icons/obj_link_conduit.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="pump" title="Draw pump">
+                    <img src="icons/obj_link_pump.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="weir" title="Draw weir">
+                    <img src="icons/obj_link_weir.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="orifice" title="Draw orifice">
+                    <img src="icons/obj_link_orifice.png" width="18" height="18" alt="">
+                </button>
+                <div class="tool-divider"></div>
+                <span class="tool-group-label">Area</span>
+                <button class="tool-btn" data-tool="subcatchment" title="Draw subcatchment polygon (double-click to close)">
+                    <img src="icons/obj_subcatchment.png" width="18" height="18" alt="">
+                </button>
+                <button class="tool-btn" data-tool="raingage" title="Add rain gage">
+                    <img src="icons/obj_gage.png" width="18" height="18" alt="">
+                </button>
+                <div class="tool-divider"></div>
+                <button class="tool-btn tool-btn-danger" data-tool="delete" title="Delete elements (Del)">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+                </button>
+            </div>
+            <button id="btn-collapse-palette" class="palette-collapse-btn" title="Hide tool palette">◂</button>
+        </div>
+        <button id="btn-reopen-palette" class="panel-reopen panel-reopen-left hidden" title="Show tool palette">▸</button>
+
+        <!-- MAP -->
+        <main id="map-container">
+            <div id="map"></div>
+
+            <!-- OSM Search -->
+            <div id="osm-search">
+                <input type="text" id="osm-search-input" placeholder="Search places (powered by OSM)..." autocomplete="off">
+                <button id="osm-search-btn" title="Search">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+                </button>
+                <div id="osm-search-results" class="hidden"></div>
+            </div>
+
+            <!-- Floating Map Settings Toggle Button -->
+            <button id="btn-toggle-map-settings" class="btn-map-settings-toggle" title="Toggle Map Settings">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
+
+            <!-- Floating Map Settings Card -->
+            <div id="map-settings-card" class="hidden">
+                <div class="settings-group">
+                    <span class="settings-label">Basemap</span>
+                    <div class="tb-pills" id="map-style-pills">
+                        <button class="tb-pill active" data-style="streets">Streets</button>
+                        <button class="tb-pill" data-style="satellite">Satellite</button>
+                        <button class="tb-pill" data-style="blank">Blank</button>
+                    </div>
+                </div>
+                <div class="settings-group-row">
+                    <button id="btn-toggle-labels" class="tb-pill toggled" title="Toggle map labels">Labels</button>
+                    <button id="btn-toggle-3d" class="tb-pill" title="Toggle 3D terrain & buildings">3D View</button>
+                </div>
+                <div class="settings-group">
+                    <span class="settings-label">Units</span>
+                    <select id="units-select" class="tb-select">
+                        <option value="SI" selected>SI (m, mm, LPS)</option>
+                        <option value="US">US (ft, in, CFS)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Street View pegman -->
+            <button id="btn-pegman" class="btn-pegman" title="Toggle Street View">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm2 5h-4c-1.1 0-2 .9-2 2v5h2v6h4v-6h2v-5c0-1.1-.9-2-2-2z"/></svg>
+            </button>
+
+            <!-- Street View container -->
+            <div id="street-view-wrapper" class="hidden">
+                <div id="street-view-container"></div>
+                <button id="btn-close-sv" class="btn-close-sv">&times;</button>
+            </div>
+
+            <!-- Time Slider Panel -->
+            <div id="time-slider-panel" class="hidden">
+                <button id="btn-play-pause" class="tb-btn tb-btn-run">▶ Play</button>
+                <button id="btn-speed" class="tb-btn">1x</button>
+                <input type="range" id="time-slider" min="0" max="100" value="0">
+                <span id="time-display">00:00:00</span>
+                <button id="btn-profile" class="tb-btn btn-profile hidden" title="Show Water Elevation Profile for selected nodes">
+                    <svg viewBox="0 0 24 24" width="13" height="13" style="vertical-align:middle;margin-right:4px"><path fill="currentColor" d="M3 3v18h18v-2H5V3H3zm4 14l4-4 3 3 4-6 2 2V7h-5l2 2-3 5-3-3-5 4.5L7 17z"/></svg>Profile
+                </button>
+            </div>
+
+            <!-- Profile Plot Modal -->
+            <div id="profile-modal" class="hidden">
+                <div id="profile-header">
+                    <svg viewBox="0 0 24 24" width="14" height="14" style="flex-shrink:0;opacity:0.7"><path fill="currentColor" d="M3 3v18h18v-2H5V3H3zm4 14l4-4 3 3 4-6 2 2V7h-5l2 2-3 5-3-3-5 4.5L7 17z"/></svg>
+                    <span id="profile-title" class="profile-title-text">Water Elevation Profile</span>
+                    <button id="btn-profile-close" title="Close profile">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+                    </button>
+                </div>
+                <div id="profile-body">
+                    <canvas id="profile-canvas"></canvas>
+                </div>
+                <div id="profile-resize-handle" title="Drag to resize"></div>
+            </div>
+        </main>
+
+        <!-- RIGHT PANEL (tabbed: Properties | Results) -->
+        <aside id="panel-right" class="side-panel">
+            <div id="panel-resizer"></div>
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-tab="props">Properties</button>
+                <button class="panel-tab" data-tab="results">Results
+                    <span class="tab-badge hidden" id="results-badge"></span>
+                </button>
+                <button class="panel-collapse-btn" id="btn-collapse-right" title="Hide panel">▸</button>
+            </div>
+            <div class="panel-tab-content active" id="tab-props">
+                <div class="panel-body" id="props-body">
+                    <p class="panel-empty">Select an element on the map to see its properties.</p>
+                </div>
+            </div>
+            <div class="panel-tab-content" id="tab-results">
+                <div class="panel-body" id="results-body">
+                    <p class="panel-empty" id="results-hint">Build a network with at least one outfall, then click ▶ Run to simulate.</p>
+                    <div class="stat-row"><span>Nodes:</span><span id="stat-nodes">0</span></div>
+                    <div class="stat-row"><span>Links:</span><span id="stat-links">0</span></div>
+                    <div class="stat-row"><span>Subcatchments:</span><span id="stat-subcatchments">0</span></div>
+                    <select id="results-category-select" class="hidden" style="width: 100%; margin: 12px 0; padding: 6px; border: 1px solid #cdd0d5; border-radius: 4px; font-size: 13px; background-color: #f7f9fc; color: #1e293b; outline: none;"></select>
+                    <div id="results-content"></div>
+                </div>
+            </div>
+        </aside>
+        <button id="reopen-right" class="panel-reopen panel-reopen-right hidden" title="Show panel">◂</button>
+
+        <!-- keep old IDs alive for JS that references them -->
+        <!-- (hidden, never displayed — just so getElementById doesn't return null) -->
+        <div class="hidden">
+            <div id="panel-props"></div>
+            <div id="panel-results"></div>
+            <button id="reopen-props"></button>
+            <button id="reopen-results"></button>
+            <button id="btn-toggle-props"></button>
+            <button id="btn-toggle-results"></button>
+            <button id="btn-collapse-props"></button>
+            <button id="btn-collapse-results"></button>
+        </div>
+
+        <!-- BOTTOM STATUS BAR -->
+        <footer id="statusbar">
+            <div class="sb-left">
+                <span>Tool: <b id="sb-tool">select</b></span>
+                <span class="sb-sep">·</span>
+                <span>Nodes: <b id="sb-nodes">0</b></span>
+                <span class="sb-sep">·</span>
+                <span>Links: <b id="sb-links">0</b></span>
+                <span class="sb-sep">·</span>
+                <span id="sb-coords"></span>
+            </div>
+            <div class="sb-right">
+                Ctrl+Z undo · Ctrl+Shift+Z redo · Ctrl+A select all · Del to delete · Esc cancel
+            </div>
+        </footer>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="inp-file-input" accept=".inp" class="hidden-input">
+    <input type="file" id="project-file-input" accept=".json,.oswmm,.geojson" class="hidden-input">
+    <input type="file" id="shp-file-input" accept=".zip,.shp" class="hidden-input">
+    <input type="file" id="dxf-file-input" accept=".dxf" class="hidden-input">
+
+    <!-- Projection Modal -->
+    <div id="projection-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h2>Coordinate System</h2>
+            <p>Select the coordinate system used in the uploaded file.</p>
+            <label class="modal-radio">
+                <input type="radio" name="coord-type" value="wgs84" checked>
+                <strong>WGS84 (lon/lat degrees)</strong>
+            </label>
+            <label class="modal-radio">
+                <input type="radio" name="coord-type" value="utm">
+                <strong>UTM / Projected (EPSG code)</strong>
+            </label>
+            <div id="utm-options" class="modal-indent hidden">
+                <input type="text" id="epsg-code-input" value="EPSG:32719" placeholder="e.g. EPSG:32719">
+                <small>Coordinates will be reprojected to the web map.</small>
+            </div>
+            <label class="modal-radio">
+                <input type="radio" name="coord-type" value="local">
+                <strong>Local coordinates</strong>
+            </label>
+            <div id="local-options" class="modal-indent hidden">
+                <small>The network will be scaled and centered near the current map view.</small>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-cancel-proj" class="tb-btn">Cancel</button>
+                <button id="btn-confirm-proj" class="tb-btn tb-btn-run">Load Network</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import-as Modal (for shapefile/DXF layers) -->
+    <div id="importas-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h2>Import Layer</h2>
+            <p id="importas-info"></p>
+            <label class="modal-radio"><input type="radio" name="importas-type" value="network" checked><strong>Network elements</strong> (points→junctions, lines→conduits, polygons→subcatchments)</label>
+            <label class="modal-radio"><input type="radio" name="importas-type" value="masterplan"><strong>Master plan</strong> (background reference only)</label>
+            <div class="modal-actions">
+                <button id="btn-cancel-importas" class="tb-btn">Cancel</button>
+                <button id="btn-confirm-importas" class="tb-btn tb-btn-run">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Configuration -->
+    <script src="config.js"></script>
+    <script>
+        if (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_MAPS_API_KEY) {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}`;
+            document.head.appendChild(script);
+        } else {
+            console.warn("config.js is missing or missing GOOGLE_MAPS_API_KEY.");
+        }
+    </script>
+
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
+    <!-- Proj4js for UTM conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    <!-- Shapefile & DXF parsers -->
+    <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+    <script src="https://unpkg.com/dxf-parser@1.1.2/dist/dxf-parser.js"></script>
+
+    <!-- Application -->
+    <script src="inpParser.js"></script>
+    <script src="inpExporter.js"></script>
+    <script src="network.js"></script>
+    <script src="street_view_overlay.js"></script>
+    <script src="swmmwasm.js"></script>
+    <script src="results.js"></script>
+    <script src="importers.js"></script>
+    <script src="app.js"></script>
+    <script src="tools.js"></script>
+    <script src="profile.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>

@@ -266,6 +266,33 @@
     // Style Extraction
     function extractMapboxStyle(feature) {
         let color = feature._svColor || 'rgba(255,255,255,0.8)';
+        
+        // Use animation result color if active
+        if (window.ResultStyling && window.ResultStyling.active && window.ResultStyling.timeSeries) {
+            const step = window.ResultStyling.currentStep || 0;
+            const ts = window.ResultStyling.timeSeries;
+            const id = feature.properties.id;
+            const type = feature.properties.type;
+            const isNode = ['JUNCTION', 'OUTFALL', 'STORAGE', 'DIVIDER'].includes(type);
+            const isLink = ['CONDUIT', 'PUMP', 'WEIR', 'ORIFICE'].includes(type);
+            
+            if (isNode && ts.nodes[id] && ts.nodes[id].depth) {
+                const val = ts.nodes[id].depth[step];
+                if (val !== undefined) {
+                    const nMin = window.ResultStyling.nodeMinMax.min, nMax = window.ResultStyling.nodeMinMax.max;
+                    const t = nMax > nMin ? (val - nMin) / (nMax - nMin) : 0.5;
+                    if (window.rampColor) color = window.rampColor(t);
+                }
+            } else if (isLink && ts.links[id] && ts.links[id].flow) {
+                const val = ts.links[id].flow[step];
+                if (val !== undefined) {
+                    const lMin = window.ResultStyling.linkMinMax.min, lMax = window.ResultStyling.linkMinMax.max;
+                    const t = lMax > lMin ? (Math.abs(val) - lMin) / (lMax - lMin) : 0.5;
+                    if (window.rampColor) color = window.rampColor(t);
+                }
+            }
+        }
+        
         let width = 2;
         
         const geomType = feature.geometry ? feature.geometry.type : '';
@@ -425,7 +452,8 @@
     // Canvas lifecycle
     function createCanvas() {
         let panoDiv = document.getElementById('street-view-container');
-        if (!panoDiv) return false;
+        let wrapperDiv = document.getElementById('street-view-wrapper');
+        if (!panoDiv || !wrapperDiv) return false;
 
         svCanvas = document.createElement('canvas');
         svCanvas.id = 'sv-overlay-canvas';
@@ -434,7 +462,7 @@
             width: '100%', height: '100%',
             pointerEvents: 'none', zIndex: '1000'
         });
-        panoDiv.appendChild(svCanvas);
+        wrapperDiv.appendChild(svCanvas);
         svCtx = svCanvas.getContext('2d');
 
         function syncSize() {
@@ -561,6 +589,7 @@
     window.StreetViewOverlay = {
         init: initStreetView,
         destroy: destroyStreetView,
+        scheduleRedraw: scheduleRedraw,
         updatePosition: function(lngLat) {
             if (panorama) {
                 panorama.setPosition({ lat: lngLat.lat, lng: lngLat.lng });

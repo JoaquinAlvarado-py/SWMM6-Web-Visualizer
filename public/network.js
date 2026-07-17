@@ -206,7 +206,7 @@
             const from = this.getNode(link.from);
             const to = this.getNode(link.to);
             if (!from || !to) return null;
-            return [from.lngLat, ...link.vertices, to.lngLat];
+            return [from.lngLat, ...(link.vertices || []), to.lngLat];
         }
 
         updateConduitLength(link) {
@@ -444,8 +444,8 @@
         bounds() {
             const coords = [];
             this.nodes.forEach(n => coords.push(n.lngLat));
-            this.links.forEach(l => l.vertices.forEach(v => coords.push(v)));
-            this.subcatchments.forEach(s => s.ring.forEach(c => coords.push(c)));
+            this.links.forEach(l => { if (l.vertices) l.vertices.forEach(v => coords.push(v)); });
+            this.subcatchments.forEach(s => s.ring.forEach(v => coords.push(v)));
             this.mesh2D.forEach(m => m.ring.forEach(c => coords.push(c))); // Included mesh in bounds
             if (!coords.length) return null;
             return coords;

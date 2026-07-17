@@ -340,6 +340,7 @@
         timeSeries: null, // parsed time series data
         nodeMinMax: { min: 0, max: 0.1 },
         linkMinMax: { min: 0, max: 0.1 },
+        currentStep: 0,
 
         applyToMap() {
             Object.entries(this.nodeColors).forEach(([id, color]) => {
@@ -354,6 +355,7 @@
         applyToMapForStep(step) {
             if (!this.active || !this.timeSeries) return;
             const ts = this.timeSeries;
+            this.currentStep = step;
             if (step < 0 || step >= ts.times.length) return;
 
             const nMin = this.nodeMinMax.min, nMax = this.nodeMinMax.max;
@@ -382,6 +384,10 @@
             const timeDisplay = document.getElementById('time-display');
             if (timeDisplay && ts.times[step]) {
                 timeDisplay.textContent = `Time: ${ts.times[step]}`;
+            }
+
+            if (window.StreetViewOverlay && window.StreetViewOverlay.scheduleRedraw) {
+                window.StreetViewOverlay.scheduleRedraw();
             }
         },
 
@@ -443,9 +449,10 @@
         const select = document.getElementById('results-category-select');
         if (select) select.classList.add('hidden');
         window.App.lastRunReport = null;
+        window.App.outData = null;
     };
 
-    window.displayResults = function (rpt) {
+    window.displayResults = function (rpt, outData) {
         const container = document.getElementById('results-content');
         const hint = document.getElementById('results-hint');
         const select = document.getElementById('results-category-select');
@@ -499,8 +506,39 @@
             });
         }
 
-        const ts = parseTimeSeries(rpt);
-        if (ts && ts.times.length > 0) {
+        let ts = null;
+        if (outData && outData.parsed && outData.numPeriods > 0) {
+            ts = { times: [], nodes: {}, links: {}, nodeMax: {}, linkMax: {} };
+            const startDate = new Date(1899, 11, 30); // SWMM epoch
+            for (let i = 0; i < outData.numPeriods; i++) {
+                const t = outData.results.times[i];
+                const d = new Date(startDate.getTime() + Math.round(t * 86400000));
+                const hrs = String(d.getHours()).padStart(2, '0');
+                const mins = String(d.getMinutes()).padStart(2, '0');
+                const secs = String(d.getSeconds()).padStart(2, '0');
+                ts.times.push(`${d.toLocaleDateString()} ${hrs}:${mins}:${secs}`);
+            }
+            outData.names.nodes.forEach((id, i) => {
+                ts.nodes[id] = {
+                    depth: outData.getTimeSeries('NODE', i, 0),
+                    head: outData.getTimeSeries('NODE', i, 1),
+                    inflow: outData.getTimeSeries('NODE', i, 4),
+                    flooding: outData.getTimeSeries('NODE', i, 5)
+                };
+            });
+            outData.names.links.forEach((id, i) => {
+                ts.links[id] = {
+                    flow: outData.getTimeSeries('LINK', i, 0),
+                    depth: outData.getTimeSeries('LINK', i, 1),
+                    velocity: outData.getTimeSeries('LINK', i, 2),
+                    capacity: outData.getTimeSeries('LINK', i, 4)
+                };
+            });
+        } else {
+            ts = parseTimeSeries(rpt);
+        }
+        
+        if (ts && ts.times && ts.times.length > 0) {
             ResultStyling.timeSeries = ts;
             if (window.AnimationUI) {
                 window.AnimationUI.setRange(ts.times.length);

@@ -318,6 +318,8 @@
         svResizeHandle.addEventListener('mousedown', (e) => {
             isResizingSV = true;
             document.body.style.cursor = 'ns-resize';
+            const svContainer = document.getElementById('street-view-container');
+            if (svContainer) svContainer.style.pointerEvents = 'none';
             e.preventDefault();
         });
 
@@ -335,6 +337,8 @@
             if (isResizingSV) {
                 isResizingSV = false;
                 document.body.style.cursor = '';
+                const svContainer = document.getElementById('street-view-container');
+                if (svContainer) svContainer.style.pointerEvents = 'auto';
                 if (map) map.resize();
             }
         });
@@ -681,7 +685,7 @@
         const model = {
             title: 'Sample Network',
             units: 'SI',
-            options: {},
+            options: { flowRouting: 'DYNWAVE' },
             nodes: [
                 { id: 'J1', type: 'JUNCTION', lngLat: [c.lng - 0.003, c.lat + 0.002], props: { invertEl: 14, maxDepth: 2, initDepth: 0, surDepth: 0, aponded: 0 } },
                 { id: 'J2', type: 'JUNCTION', lngLat: [c.lng, c.lat + 0.0025], props: { invertEl: 12.5, maxDepth: 2, initDepth: 0, surDepth: 0, aponded: 0 } },

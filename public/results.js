@@ -216,8 +216,8 @@
         return out;
     }
 
-    function parseEngineErrors(rpt) {
-        return rpt.split('\n')
+    function parseEngineErrors(lines0) {
+        return lines0
             .filter(l => /^\s*(ERROR|WARNING)\b/i.test(l.trim()))
             .map(l => l.trim())
             .slice(0, 8);
@@ -233,7 +233,7 @@
             linkMax: {}
         };
 
-        const lines = rpt.split('\n');
+        const lines = rptLines;
         let currentType = null; // 'node' or 'link' or 'cell'
         let currentId = null;
         let timeIndexMap = {}; 

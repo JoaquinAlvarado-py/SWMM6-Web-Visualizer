@@ -3,9 +3,9 @@
 Web-based GIS visualization, planning, and simulation platform for SWMM hydraulic models and GeoJSON networks.
 
 ## Overview
-<img width="1873" height="922" alt="image" src="https://github.com/user-attachments/assets/1ae23cd3-7f55-4bff-8d4f-f8a7824f102d" />
+<video src="assets/demo.mp4" width="100%" controls="controls" autoplay loop muted></video>
 
-provides an interactive, modern web interface for viewing, managing, and simulating stormwater and wastewater networks. It brings traditional SWMM modeling into a 3D geospatial environment using Mapbox GL JS, making it easier to analyze infrastructure alongside real-world terrain, 3D buildings, and Google Street View.
+OpenSWMM6 3D provides an interactive, modern web interface for viewing, managing, and simulating stormwater and wastewater networks. It brings traditional SWMM modeling into a 3D geospatial environment using Mapbox GL JS, making it easier to analyze infrastructure alongside real-world terrain, 3D buildings, and Google Street View.
 
 Under the hood, it leverages the powerful [openswmm.engine](https://github.com/HydroCouple/openswmm.engine) by HydroCouple, a dynamic hydrology-hydraulic water quality simulation model for stormwater, wastewater, and combined sewer collection systems.
 

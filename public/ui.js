@@ -86,7 +86,29 @@
         }
     });
 
-    document.getElementById('btn-load-sample').addEventListener('click', loadSampleNetwork);
+    async function loadGitHubSample(filename) {
+        try {
+            window.showLoadingOverlay('Loading ' + filename, 'Fetching file…');
+            const res = await fetch(`./sample_models/${filename}`);
+            if (!res.ok) throw new Error('Failed to fetch ' + filename + ' (Status: ' + res.status + ')');
+            const text = await res.text();
+            window.updateLoadingOverlay(20, 'Parsing…');
+            const model = await window.parseInpAsync(text);
+            window.hideLoadingOverlay();
+            if (!model.nodes.length) {
+                alert('No nodes with coordinates found in the .inp file.');
+                return;
+            }
+            window.openProjectionModal(model);
+        } catch (err) {
+            window.hideLoadingOverlay();
+            alert('Failed to load sample: ' + err.message);
+        }
+    }
+
+    document.getElementById('btn-sample-web').addEventListener('click', () => loadGitHubSample('BellingeSWMM_v021_web.inp'));
+    document.getElementById('btn-sample-self').addEventListener('click', () => loadGitHubSample('BellingeSWMM_v021_selfcontained.inp'));
+    document.getElementById('btn-sample-noper').addEventListener('click', () => loadGitHubSample('BellingeSWMM_v021_nopervious.inp'));
 
     // Options Modal
     const optionsModal = document.getElementById('options-modal');
@@ -749,48 +771,6 @@
         window.AnimationUI.updateDisplay();
     });
 
-    // Sample network
-    function loadSampleNetwork() {
-        const c = map.getCenter();
-        const model = {
-            title: 'Sample Network',
-            units: 'SI',
-            options: { flowRouting: 'DYNWAVE' },
-            nodes: [
-                { id: 'J1', type: 'JUNCTION', lngLat: [c.lng - 0.003, c.lat + 0.002], props: { invertEl: 14, maxDepth: 2, initDepth: 0, surDepth: 0, aponded: 0 } },
-                { id: 'J2', type: 'JUNCTION', lngLat: [c.lng, c.lat + 0.0025], props: { invertEl: 12.5, maxDepth: 2, initDepth: 0, surDepth: 0, aponded: 0 } },
-                { id: 'J3', type: 'JUNCTION', lngLat: [c.lng + 0.0015, c.lat + 0.0005], props: { invertEl: 11, maxDepth: 2.5, initDepth: 0, surDepth: 0, aponded: 0 } },
-                { id: 'ST1', type: 'STORAGE', lngLat: [c.lng - 0.001, c.lat - 0.0005], props: { invertEl: 10.5, maxDepth: 4, initDepth: 0, shape: 'FUNCTIONAL', coeff: 1000, exponent: 0, constant: 0 } },
-                { id: 'O1', type: 'OUTFALL', lngLat: [c.lng + 0.003, c.lat - 0.002], props: { invertEl: 9, outfallType: 'FREE', stageData: '', gated: 'NO' } },
-                { id: 'RG1', type: 'RAINGAGE', lngLat: [c.lng - 0.0035, c.lat - 0.0015], props: { format: 'INTENSITY', interval: '1:00', scf: 1.0, sourceType: 'TIMESERIES', sourceName: 'TS1' } }
-            ],
-            links: [
-                { id: 'C1', type: 'CONDUIT', from: 'J1', to: 'J2', vertices: [], props: { length: 0, autoLength: true, roughness: 0.013, inOffset: 0, outOffset: 0, initFlow: 0, maxFlow: 0, xShape: 'CIRCULAR', geom1: 0.6, geom2: 0, geom3: 0, geom4: 0, barrels: 1 } },
-                { id: 'C2', type: 'CONDUIT', from: 'J2', to: 'J3', vertices: [], props: { length: 0, autoLength: true, roughness: 0.013, inOffset: 0, outOffset: 0, initFlow: 0, maxFlow: 0, xShape: 'CIRCULAR', geom1: 0.8, geom2: 0, geom3: 0, geom4: 0, barrels: 1 } },
-                { id: 'C3', type: 'CONDUIT', from: 'ST1', to: 'J3', vertices: [], props: { length: 0, autoLength: true, roughness: 0.013, inOffset: 0, outOffset: 0, initFlow: 0, maxFlow: 0, xShape: 'CIRCULAR', geom1: 0.5, geom2: 0, geom3: 0, geom4: 0, barrels: 1 } },
-                { id: 'C4', type: 'CONDUIT', from: 'J3', to: 'O1', vertices: [], props: { length: 0, autoLength: true, roughness: 0.013, inOffset: 0, outOffset: 0, initFlow: 0, maxFlow: 0, xShape: 'CIRCULAR', geom1: 1.0, geom2: 0, geom3: 0, geom4: 0, barrels: 1 } }
-            ],
-            subcatchments: [
-                {
-                    id: 'S1',
-                    ring: [
-                        [c.lng - 0.004, c.lat + 0.001], [c.lng - 0.0025, c.lat + 0.003],
-                        [c.lng - 0.0005, c.lat + 0.0025], [c.lng - 0.002, c.lat + 0.0002]
-                    ],
-                    props: { raingage: 'RG1', outlet: 'J1', area: 4.5, autoArea: false, imperv: 45, width: 300, slope: 0.8, curbLen: 0 }
-                },
-                {
-                    id: 'S2',
-                    ring: [
-                        [c.lng + 0.0002, c.lat + 0.0032], [c.lng + 0.0025, c.lat + 0.0028],
-                        [c.lng + 0.002, c.lat + 0.001], [c.lng + 0.0004, c.lat + 0.0012]
-                    ],
-                    props: { raingage: 'RG1', outlet: 'J2', area: 3.2, autoArea: false, imperv: 60, width: 250, slope: 1.2, curbLen: 0 }
-                }
-            ]
-        };
-        window.loadModelIntoNetwork(model);
-    }
 
     // Startup: restore autosaved project
     map.on('load', () => {

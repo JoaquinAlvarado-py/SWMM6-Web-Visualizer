@@ -626,7 +626,7 @@
         }
     };
 
-    window.startSimulatedTopProgress = function (label) {
+    window.startSimulatedTopProgress = function (label, targetDuration = 3000) {
         if (topProgressInterval) clearInterval(topProgressInterval);
         const container = document.getElementById('top-progress-container');
         const bar = document.getElementById('top-progress-bar');
@@ -636,19 +636,23 @@
         container.classList.remove('hidden');
         bar.style.width = '0%';
         bar.style.backgroundColor = '';
-        lbl.textContent = label;
+        lbl.textContent = `${label} (0%) · ETA: ${(targetDuration / 1000).toFixed(1)}s`;
 
-        let percent = 0;
+        const startTime = Date.now();
         topProgressInterval = setInterval(() => {
-            if (percent < 50) {
-                percent += 8;
-            } else if (percent < 85) {
-                percent += 2;
-            } else if (percent < 98) {
-                percent += 0.4;
+            const elapsed = Date.now() - startTime;
+            let percent = (elapsed / targetDuration) * 100;
+            
+            if (percent < 98) {
+                const remainingSec = Math.max(0, (targetDuration - elapsed) / 1000).toFixed(1);
+                bar.style.width = percent.toFixed(1) + '%';
+                lbl.textContent = `${label} (${Math.floor(percent)}%) · ETA: ${remainingSec}s`;
+            } else {
+                // If it takes longer than estimated, slow down and show calculating status
+                percent = 98;
+                bar.style.width = '98%';
+                lbl.textContent = `${label} (98%) · Calculating...`;
             }
-            bar.style.width = percent + '%';
-            lbl.textContent = `${label} (${Math.floor(percent)}%)`;
         }, 100);
     };
 
@@ -872,7 +876,16 @@
         const inpText = window.inpExporter.generateInp(Net);
         btnRun.disabled = true;
         btnRun.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> Running…';
-        window.startSimulatedTopProgress('Simulating');
+        
+        // Estimate run time based on network size or use last known execution time
+        const networkSize = Net.nodeCount + Net.linkCount + Net.subcatchments.length;
+        let targetDuration = window.App.lastSimDuration;
+        if (!targetDuration) {
+            targetDuration = networkSize < 100 ? 600 : networkSize < 500 ? 1500 : 3000;
+        }
+
+        const simStartTime = Date.now();
+        window.startSimulatedTopProgress('Simulating', targetDuration);
 
         try {
             let result;
@@ -893,6 +906,9 @@
             } else {
                 window.App.outData = null;
             }
+
+            // Save actual duration for subsequent runs
+            window.App.lastSimDuration = Date.now() - simStartTime;
 
             window.App.lastRunReport = rpt;
             console.log(rpt);

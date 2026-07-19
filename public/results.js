@@ -382,7 +382,7 @@
             const lMin = this.linkMinMax.min, lMax = this.linkMinMax.max;
 
             Object.entries(ts.nodes).forEach(([id, values]) => {
-                const val = values.depth ? values.depth[step] : undefined;
+                const val = values[this.activeNodeVar] ? values[this.activeNodeVar][step] : undefined;
                 if (val !== undefined) {
                     const t = nMax > nMin ? (val - nMin) / (nMax - nMin) : 0.5;
                     const color = rampColor(t);
@@ -395,7 +395,7 @@
             });
 
             Object.entries(ts.links).forEach(([id, values]) => {
-                const val = values.flow ? values.flow[step] : undefined;
+                const val = values[this.activeLinkVar] ? values[this.activeLinkVar][step] : undefined;
                 if (val !== undefined) {
                     const t = lMax > lMin ? (Math.abs(val) - lMin) / (lMax - lMin) : 0.5;
                     const color = rampColor(t);

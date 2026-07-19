@@ -86,7 +86,9 @@
         base];
 
     // simulation results override element colors when present
-    const resultOr = (base) => ['coalesce', ['feature-state', 'resultColor'], base];
+    const resultOr = (base) => ['case',
+        ['!=', ['feature-state', 'resultColor'], null], ['feature-state', 'resultColor'],
+        base];
 
     // ---------- Network layers ----------
     function ensureNetworkLayers() {
